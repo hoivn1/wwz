@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstdint>
+#include <utility>
 #include <windows.h>
 
 #include "wwz/Sandbox/HandleGuard.h"
@@ -7,8 +8,20 @@
 #include "wwz/Sandbox/CrossProcessIO.h"
 
 void TestHandleGuardRaII() {
-    HANDLE handle = ::GetCurrentProcess();
-    assert(handle != nullptr && handle != INVALID_HANDLE_VALUE);
+    HANDLE rawHandle = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    assert(rawHandle != nullptr);
+
+    {
+        wwz::sandbox::HandleGuard first(rawHandle);
+        wwz::sandbox::HandleGuard second(std::move(first));
+        assert(!first.IsValid());
+        assert(second.IsValid());
+        rawHandle = second.Get();
+    }
+
+    ::SetLastError(ERROR_SUCCESS);
+    assert(::WaitForSingleObject(rawHandle, 0) == WAIT_FAILED);
+    assert(::GetLastError() == ERROR_INVALID_HANDLE);
 }
 
 void TestResolverFindsRead() {
