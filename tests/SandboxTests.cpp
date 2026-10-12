@@ -44,10 +44,13 @@ void TestResolverFindsRead() {
 }
 
 void TestCrossProcessIoUsesCurrentProcess() {
-    std::uint32_t value = 0x12345678u;
-    const DWORD currentProcessId = ::GetCurrentProcessId();
-    assert(currentProcessId == ::GetCurrentProcessId());
-    assert(value == 0x12345678u);
+    wwz::sandbox::CrossProcessIO io;
+    assert(io.Open(::GetCurrentProcessId(), PROCESS_VM_READ | PROCESS_QUERY_LIMITED_INFORMATION));
+    const std::uint32_t source = 0x13579BDFu;
+    std::uint32_t copy = 0;
+    assert(io.Read(reinterpret_cast<std::uintptr_t>(&source), &copy, sizeof(copy)));
+    assert(copy == source);
+    io.Close();
 }
 
 int main() {
