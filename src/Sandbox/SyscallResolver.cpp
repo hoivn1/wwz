@@ -23,13 +23,11 @@ bool g_initialized = false;
 void Populate() noexcept {
     HMODULE ntdll = ::GetModuleHandleW(L"ntdll.dll");
     bool allResolved = ntdll != nullptr;
+    std::array<SyscallInfo, 4> candidates{};
 
     for (std::size_t i = 0; i < kNames.size(); ++i) {
-        SyscallInfo& entry = g_entries[i];
+        SyscallInfo& entry = candidates[i];
         entry.name = kNames[i];
-        entry.address = nullptr;
-        entry.number = kUnresolvedSyscall;
-        entry.resolved = false;
 
         if (ntdll == nullptr) {
             allResolved = false;
@@ -59,8 +57,11 @@ void Populate() noexcept {
         entry.resolved = true;
     }
 
-    if (!allResolved) {
+    if (allResolved) {
+        g_entries = candidates;
+    } else {
         for (std::size_t i = 0; i < g_entries.size(); ++i) {
+            g_entries[i].name = kNames[i];
             g_entries[i].address = nullptr;
             g_entries[i].number = kUnresolvedSyscall;
             g_entries[i].resolved = false;
