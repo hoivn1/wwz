@@ -4,7 +4,9 @@ Tài liệu này mô tả các tín hiệu phòng thủ có thể quan sát khi 
 hoặc thao tác với tiến trình khác. Mục đích là giúp kiểm thử và thiết kế giám sát
 minh bạch; tài liệu không cung cấp hướng dẫn né tránh phát hiện.
 
-## Handle và access mask
+### Handle
+
+### Access mask
 
 Một thao tác liên tiến trình thường bắt đầu bằng việc tạo **handle** tới tiến
 trình đích. Kiểu đối tượng của handle (process, thread hoặc token), PID đích,
@@ -21,7 +23,7 @@ tiến trình gọi với tiến trình đích giúp giảm cảnh báo nhầm. 
 handle hợp lệ đã tạo ra trạng thái có thể kiểm kê; đổi tên hàm gọi không xóa được
 trạng thái đó.
 
-## Call stack và đường đi của lời gọi
+### Call stack
 
 **Call stack** cung cấp ngữ cảnh cho sự kiện mở handle, đọc/ghi bộ nhớ hoặc đổi
 quyền bảo vệ trang. Stack có thể cho thấy mô-đun người dùng khởi phát, thư viện
@@ -30,13 +32,17 @@ ký số, đường dẫn tệp, trạng thái tải mô-đun và danh tính ti�
 dựa vào một địa chỉ trả về. Stack không phải lúc nào cũng hoàn chỉnh, nhưng vẫn
 là tín hiệu bổ sung tốt cho quyền, thời gian và tần suất.
 
-## ETW và callback kernel
+### ETW
+
+### Kernel callbacks
 
 **ETW** (Event Tracing for Windows) cung cấp các phiên theo dõi cho tiến trình,
 thread, image load, handle và nhiều hoạt động kernel khác. Bộ sưu tập ETW có thể
 được ghép theo PID, TID, timestamp và địa chỉ đối tượng để dựng chuỗi sự kiện.
 ETW không yêu cầu ứng dụng phải dùng đúng một API Win32 cụ thể; điều quan trọng là
 hoạt động hệ thống phát sinh sự kiện quan sát được.
+
+### ObRegisterCallbacks
 
 Ở kernel, các thành phần phòng thủ có thể đăng ký **ObRegisterCallbacks** để nhận
 thông báo trước/sau các thao tác trên process và thread object. Callback có thể
@@ -54,18 +60,22 @@ quan sát được**: chúng tạo hoặc sử dụng handle, đi qua kernel, c�
 trong ETW và chịu các callback kernel phù hợp. Vì vậy việc gọi syscall trực tiếp
 không biến hoạt động thành vô hình và không nên được xem là cơ chế né phát hiện.
 
-## ETW-TI, handle stripping và process protection light
+### ETW-TI
 
 **ETW-TI** (Threat Intelligence) bổ sung các tín hiệu phục vụ phát hiện hành vi
 đáng ngờ ở lớp kernel và bảo mật nền tảng. Khi có dữ liệu ETW-TI, nên xem nó như
 một phần của bằng chứng: kết hợp với access mask, call stack, signer, quan hệ
 cha-con và chuỗi thời gian để đưa ra kết luận có thể giải thích.
 
+### Handle stripping
+
 **Handle stripping** là việc giảm hoặc loại bỏ các quyền nhạy cảm trên handle
 trước khi cấp cho caller, thường theo chính sách của callback hoặc thành phần bảo
 vệ. Việc này làm thay đổi khả năng thao tác nhưng vẫn để lại dấu vết của yêu cầu
 và quyết định chính sách. Kiểm thử cần ghi nhận cả quyền yêu cầu lẫn quyền thực
 tế nhận được.
+
+### Process protection light
 
 **Process protection light** (Protected Process Light, PPL) áp dụng cấp độ bảo
 vệ dựa trên signer và loại bảo vệ. Một tiến trình thường không thể tùy ý mở hoặc
