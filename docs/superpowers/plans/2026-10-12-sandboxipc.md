@@ -8,7 +8,7 @@
 
 **Tech Stack:** C++17, MSVC 19.50+, CMake 3.20+, Windows SDK, MASM x64, Windows Native API types from `Windows.h`/`winternl.h`.
 
-**Spec:** `D:\RenderUtility\docs\superpowers\specs\2026-10-12-sandboxipc-design.md`
+**Spec:** `D:\RenderUtility\wwz_external\docs\superpowers\specs\2026-10-12-sandboxipc-design.md`
 
 ## Global Constraints
 
@@ -57,7 +57,7 @@ Expected: configuration succeeds and the build fails because the requested publi
 
 - [ ] **Step 3: Write minimal project targets**
 
-Configure CMake with:
+Configure CMake with an empty static library target so the red build reaches the missing-header errors without requiring production sources to exist yet, plus a minimal `src/main.cpp` containing `int main() { return 0; }`:
 
 ```cmake
 cmake_minimum_required(VERSION 3.20)
@@ -67,10 +67,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(NOT MSVC OR NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
   message(FATAL_ERROR "wwz_external requires MSVC x64")
 endif()
-add_library(wwz_sandbox STATIC
-  src/Sandbox/SyscallResolver.cpp
-  src/Sandbox/CrossProcessIO.cpp
-  src/Sandbox/SyscallStub.asm)
+add_library(wwz_sandbox STATIC)
 target_include_directories(wwz_sandbox PUBLIC include)
 add_executable(wwz_external src/main.cpp)
 target_link_libraries(wwz_external PRIVATE wwz_sandbox)
@@ -86,7 +83,7 @@ Add `/W4 /permissive- /utf-8` for MSVC targets and `kernel32`/`user32` only if t
 
 Run `cmake --build D:\RenderUtility\wwz_external\build --config Release --target SandboxTests`.
 
-Expected: the target graph is correct but compilation still fails from missing public headers and source implementations.
+Expected: the target graph configures, then `SandboxTests` fails because the requested public headers are not present; the empty library is completed in later tasks.
 
 - [ ] **Step 5: Commit**
 
@@ -196,7 +193,7 @@ Expected: compile failure because the syscall stubs and `CrossProcessIO` are not
 
 - [ ] **Step 3: Write minimal implementation**
 
-Declare the native parameter order followed by a trailing `std::uint32_t syscallNumber`. Implement MASM entry points with `mov r10, rcx`, load the trailing argument from `[rsp+28h]` for the four-parameter `NtOpenProcess` and `[rsp+30h]` for the five-parameter calls, execute `syscall`, and `ret`. In `CrossProcessIO`, build `OBJECT_ATTRIBUTES` and `CLIENT_ID`, call only the resolved stubs, preserve `NTSTATUS`, return false for `STATUS_ACCESS_DENIED` and `STATUS_PARTIAL_COPY`, and never request an access mask other than the caller's argument. Include the comparison comment: `So sánh behavior giữa ReadProcessMemory (Win32 API) và NtReadVirtualMemory (native API) để hiểu layer.`
+Declare the native parameter order followed by a trailing `std::uint32_t syscallNumber`. Implement MASM entry points with `mov r10, rcx`, load the trailing argument from `[rsp+28h]` for the four-parameter `NtOpenProcess` and `[rsp+30h]` for the five-parameter calls, execute `syscall`, and `ret`. In `CrossProcessIO`, build `OBJECT_ATTRIBUTES` and `CLIENT_ID`, call only the resolved stubs, preserve `NTSTATUS`, return false for `STATUS_ACCESS_DENIED` and `STATUS_PARTIAL_COPY`, and never request an access mask other than the caller's argument. Include the comparison comment: `So sánh behavior giữa ReadProcessMemory (Win32 API) và NtReadVirtualMemory (native API) để hiểu layer.` Add the three implementation files to `wwz_sandbox` with `target_sources(wwz_sandbox PRIVATE ...)` in `CMakeLists.txt`.
 
 - [ ] **Step 4: Run test to verify it passes**
 
