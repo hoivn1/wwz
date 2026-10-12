@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstdlib>
 #include <cstdio>
 #include <cstdint>
 #include <utility>
@@ -7,6 +8,13 @@
 #include "wwz/Sandbox/HandleGuard.h"
 #include "wwz/Sandbox/SyscallResolver.h"
 #include "wwz/Sandbox/CrossProcessIO.h"
+
+void Check(bool condition, const char* message) {
+    if (!condition) {
+        std::fprintf(stderr, "Check failed: %s\n", message);
+        std::abort();
+    }
+}
 
 void TestHandleGuardRaII() {
     HANDLE rawHandle = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
@@ -45,11 +53,11 @@ void TestResolverFindsRead() {
 
 void TestCrossProcessIoUsesCurrentProcess() {
     wwz::sandbox::CrossProcessIO io;
-    assert(io.Open(::GetCurrentProcessId(), PROCESS_VM_READ | PROCESS_QUERY_LIMITED_INFORMATION));
+    Check(io.Open(::GetCurrentProcessId(), PROCESS_VM_READ | PROCESS_QUERY_LIMITED_INFORMATION), "Open current process");
     const std::uint32_t source = 0x13579BDFu;
     std::uint32_t copy = 0;
-    assert(io.Read(reinterpret_cast<std::uintptr_t>(&source), &copy, sizeof(copy)));
-    assert(copy == source);
+    Check(io.Read(reinterpret_cast<std::uintptr_t>(&source), &copy, sizeof(copy)), "Read current process");
+    Check(copy == source, "Copied value matches source");
     io.Close();
 }
 

@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <winternl.h>
+
 #include "wwz/Sandbox/HandleGuard.h"
 
 namespace wwz::sandbox {
@@ -14,12 +16,12 @@ public:
     bool Write(std::uintptr_t address, const void* buffer, std::size_t size) noexcept;
     void Close() noexcept;
 
-    [[nodiscard]] std::int32_t LastStatus() const noexcept { return lastStatus_; }
+    [[nodiscard]] NTSTATUS LastStatus() const noexcept { return lastStatus_; }
     [[nodiscard]] std::size_t LastBytesTransferred() const noexcept { return lastBytesTransferred_; }
 
 private:
     HandleGuard process_;
-    std::int32_t lastStatus_{0};
+    NTSTATUS lastStatus_{0};
     std::size_t lastBytesTransferred_{0};
 };
 

@@ -2,36 +2,36 @@ OPTION CASEMAP:NONE
 
 .code
 
-PUBLIC NtReadVirtualMemory
-NtReadVirtualMemory PROC
+PUBLIC SyscallNtReadVirtualMemory
+SyscallNtReadVirtualMemory PROC
     mov r10, rcx
     mov eax, dword ptr [rsp+30h]
     syscall
     ret
-NtReadVirtualMemory ENDP
+SyscallNtReadVirtualMemory ENDP
 
-PUBLIC NtWriteVirtualMemory
-NtWriteVirtualMemory PROC
+PUBLIC SyscallNtWriteVirtualMemory
+SyscallNtWriteVirtualMemory PROC
     mov r10, rcx
     mov eax, dword ptr [rsp+30h]
     syscall
     ret
-NtWriteVirtualMemory ENDP
+SyscallNtWriteVirtualMemory ENDP
 
-PUBLIC NtOpenProcess
-NtOpenProcess PROC
+PUBLIC SyscallNtOpenProcess
+SyscallNtOpenProcess PROC
     mov r10, rcx
     mov eax, dword ptr [rsp+28h]
     syscall
     ret
-NtOpenProcess ENDP
+SyscallNtOpenProcess ENDP
 
-PUBLIC NtProtectVirtualMemory
-NtProtectVirtualMemory PROC
+PUBLIC SyscallNtProtectVirtualMemory
+SyscallNtProtectVirtualMemory PROC
     mov r10, rcx
     mov eax, dword ptr [rsp+30h]
     syscall
     ret
-NtProtectVirtualMemory ENDP
+SyscallNtProtectVirtualMemory ENDP
 
 END

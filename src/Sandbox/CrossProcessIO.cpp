@@ -8,10 +8,9 @@
 namespace wwz::sandbox {
 namespace {
 
-constexpr std::int32_t kStatusSuccess = 0;
-constexpr std::int32_t kStatusAccessDenied = static_cast<std::int32_t>(0xC0000022u);
-constexpr std::int32_t kStatusPartialCopy = static_cast<std::int32_t>(0x8000000Du);
-constexpr std::int32_t kStatusInvalidParameter = static_cast<std::int32_t>(0xC000000Du);
+constexpr NTSTATUS kStatusAccessDenied = static_cast<NTSTATUS>(0xC0000022u);
+constexpr NTSTATUS kStatusPartialCopy = static_cast<NTSTATUS>(0x8000000Du);
+constexpr NTSTATUS kStatusInvalidParameter = static_cast<NTSTATUS>(0xC000000Du);
 
 struct NativeObjectAttributes {
     std::uint32_t length;
@@ -27,7 +26,7 @@ struct NativeClientId {
     HANDLE uniqueThread;
 };
 
-bool IsSuccess(std::int32_t status) noexcept {
+bool IsSuccess(NTSTATUS status) noexcept {
     return status >= 0;
 }
 
@@ -51,11 +50,11 @@ bool CrossProcessIO::Open(std::uint32_t pid, std::uint32_t accessMask) noexcept 
     attributes.length = sizeof(attributes);
     NativeClientId clientId{reinterpret_cast<HANDLE>(static_cast<std::uintptr_t>(pid)), nullptr};
     HANDLE opened = nullptr;
-    const std::int32_t status = NtOpenProcess(&opened,
-                                              static_cast<ACCESS_MASK>(accessMask),
-                                              &attributes,
-                                              &clientId,
-                                              info->number);
+    const NTSTATUS status = SyscallNtOpenProcess(&opened,
+                                                 static_cast<ACCESS_MASK>(accessMask),
+                                                 &attributes,
+                                                 &clientId,
+                                                 info->number);
     lastStatus_ = status;
     lastBytesTransferred_ = 0;
     if (!IsSuccess(status) || opened == nullptr) {
@@ -79,12 +78,12 @@ bool CrossProcessIO::Read(std::uintptr_t address, void* buffer, std::size_t size
 
     // So sánh behavior giữa ReadProcessMemory (Win32 API) và NtReadVirtualMemory (native API) để hiểu layer.
     std::size_t transferred = 0;
-    lastStatus_ = NtReadVirtualMemory(process_.Get(),
-                                      reinterpret_cast<void*>(address),
-                                      buffer,
-                                      size,
-                                      &transferred,
-                                      info->number);
+    lastStatus_ = SyscallNtReadVirtualMemory(process_.Get(),
+                                             reinterpret_cast<void*>(address),
+                                             buffer,
+                                             size,
+                                             &transferred,
+                                             info->number);
     lastBytesTransferred_ = transferred;
     return IsSuccess(lastStatus_) && lastStatus_ != kStatusAccessDenied && lastStatus_ != kStatusPartialCopy;
 }
@@ -102,12 +101,12 @@ bool CrossProcessIO::Write(std::uintptr_t address, const void* buffer, std::size
     }
 
     std::size_t transferred = 0;
-    lastStatus_ = NtWriteVirtualMemory(process_.Get(),
-                                       reinterpret_cast<void*>(address),
-                                       buffer,
-                                       size,
-                                       &transferred,
-                                       info->number);
+    lastStatus_ = SyscallNtWriteVirtualMemory(process_.Get(),
+                                              reinterpret_cast<void*>(address),
+                                              buffer,
+                                              size,
+                                              &transferred,
+                                              info->number);
     lastBytesTransferred_ = transferred;
     return IsSuccess(lastStatus_) && lastStatus_ != kStatusAccessDenied && lastStatus_ != kStatusPartialCopy;
 }

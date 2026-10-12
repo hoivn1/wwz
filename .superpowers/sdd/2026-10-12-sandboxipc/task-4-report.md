@@ -40,3 +40,21 @@ NtProtectVirtualMemory: 80
 
 - MASM emits expected warnings for C++-only `/permissive-`, `/utf-8`, and `/W` options inherited from the shared target compile options; they do not affect the build.
 - Release assertions are compiled out by the standard `NDEBUG` setting; the Debug run confirms the assertions execute.
+
+## Fix Round 1
+
+- Replaced the current-process I/O assertions with an always-evaluated `Check` helper, so Release executes Open, Read, and value-copy validation.
+- Renamed all custom MASM exports and C++ declarations/calls to `SyscallNtReadVirtualMemory`, `SyscallNtWriteVirtualMemory`, `SyscallNtOpenProcess`, and `SyscallNtProtectVirtualMemory`.
+- Updated public syscall/status types to use `NTSTATUS` from `winternl.h`.
+
+Validation with the requested CMake executable:
+
+```text
+Release build: exit 0
+Release SandboxTests.exe: exit 0
+Debug build: exit 0
+Debug SandboxTests.exe: exit 0
+CTest Release: 1/1 passed, 100%
+```
+
+Both configurations printed syscall numbers `63`, `58`, `38`, and `80` and completed the current-process I/O checks.
