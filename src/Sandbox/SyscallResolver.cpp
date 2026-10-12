@@ -50,11 +50,22 @@ void Populate() noexcept {
 
         std::uint32_t number = 0;
         std::memcpy(&number, stub + 4, sizeof(number));
+        if (number == kUnresolvedSyscall) {
+            allResolved = false;
+            continue;
+        }
         entry.address = reinterpret_cast<void*>(proc);
         entry.number = number;
         entry.resolved = true;
     }
 
+    if (!allResolved) {
+        for (std::size_t i = 0; i < g_entries.size(); ++i) {
+            g_entries[i].address = nullptr;
+            g_entries[i].number = kUnresolvedSyscall;
+            g_entries[i].resolved = false;
+        }
+    }
     g_initialized = allResolved;
 }
 

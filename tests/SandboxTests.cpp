@@ -1,4 +1,3 @@
-#include <cassert>
 #include <cstdlib>
 #include <cstdio>
 #include <cstdint>
@@ -18,35 +17,38 @@ void Check(bool condition, const char* message) {
 
 void TestHandleGuardRaII() {
     HANDLE rawHandle = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
-    assert(rawHandle != nullptr);
+    Check(rawHandle != nullptr, "Create event");
 
     {
         wwz::sandbox::HandleGuard first(rawHandle);
         wwz::sandbox::HandleGuard second(std::move(first));
-        assert(!first.IsValid());
-        assert(second.IsValid());
+        Check(!first.IsValid(), "Moved-from guard is invalid");
+        Check(second.IsValid(), "Moved-to guard is valid");
         rawHandle = second.Get();
     }
 
     ::SetLastError(ERROR_SUCCESS);
-    assert(::WaitForSingleObject(rawHandle, 0) == WAIT_FAILED);
-    assert(::GetLastError() == ERROR_INVALID_HANDLE);
+    Check(::WaitForSingleObject(rawHandle, 0) == WAIT_FAILED, "Destroyed guard closes handle");
+    Check(::GetLastError() == ERROR_INVALID_HANDLE, "Closed handle reports invalid handle");
 }
 
 void TestResolverFindsRead() {
     auto& resolver = wwz::sandbox::SyscallResolver::Instance();
-    assert(resolver.Initialize());
-    assert(resolver.IsInitialized());
+    Check(resolver.Initialize(), "Resolver initializes");
+    Check(resolver.IsInitialized(), "Resolver remains initialized");
 
     const auto* read = resolver.Get(wwz::sandbox::SyscallId::NtReadVirtualMemory);
-    assert(read != nullptr);
-    assert(read->address != nullptr);
-    assert(read->resolved);
-    assert(read->number != wwz::sandbox::kUnresolvedSyscall);
+    Check(read != nullptr, "Read entry exists");
+    Check(read->address != nullptr, "Read entry has address");
+    Check(read->resolved, "Read entry is resolved");
+    Check(read->number != wwz::sandbox::kUnresolvedSyscall, "Read number is resolved");
 
     for (std::uint8_t raw = 0; raw < static_cast<std::uint8_t>(wwz::sandbox::SyscallId::Count); ++raw) {
         const auto* info = resolver.Get(static_cast<wwz::sandbox::SyscallId>(raw));
-        assert(info != nullptr);
+        Check(info != nullptr, "Resolver entry exists");
+        Check(info->address != nullptr, "Resolver entry has address");
+        Check(info->resolved, "Resolver entry is resolved");
+        Check(info->number != wwz::sandbox::kUnresolvedSyscall, "Resolver number is resolved");
         std::printf("%s: %u\n", info->name, info->number);
     }
 }

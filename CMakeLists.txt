@@ -1,12 +1,30 @@
 cmake_minimum_required(VERSION 3.20)
-project(wwz_external LANGUAGES CXX ASM_MASM)
+project(wwz_external LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(NOT MSVC OR NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
-  message(FATAL_ERROR "wwz_external requires MSVC x64")
+if(NOT MSVC)
+  message(FATAL_ERROR "wwz_external requires an MSVC generator")
 endif()
+
+if(MSVC_VERSION LESS 1950)
+  message(FATAL_ERROR "wwz_external requires MSVC 19.50 or newer")
+endif()
+
+if(NOT CMAKE_GENERATOR MATCHES "^Visual Studio")
+  message(FATAL_ERROR "wwz_external requires a Visual Studio generator")
+endif()
+
+if(NOT CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
+  message(FATAL_ERROR "wwz_external requires the exact Visual Studio x64 platform")
+endif()
+
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+  message(FATAL_ERROR "wwz_external requires 8-byte pointers")
+endif()
+
+enable_language(ASM_MASM)
 
 add_library(wwz_sandbox STATIC)
 target_include_directories(wwz_sandbox PUBLIC include)

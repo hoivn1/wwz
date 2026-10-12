@@ -39,8 +39,14 @@ bool CrossProcessIO::Open(std::uint32_t pid, std::uint32_t accessMask) noexcept 
         return false;
     }
     auto& resolver = SyscallResolver::Instance();
+    if (!resolver.Initialize() || !resolver.IsInitialized()) {
+        lastStatus_ = kStatusInvalidParameter;
+        lastBytesTransferred_ = 0;
+        return false;
+    }
     const SyscallInfo* info = resolver.Get(SyscallId::NtOpenProcess);
-    if (info == nullptr || !info->resolved) {
+    if (info == nullptr || !info->resolved || info->address == nullptr ||
+        info->number == kUnresolvedSyscall) {
         lastStatus_ = kStatusInvalidParameter;
         lastBytesTransferred_ = 0;
         return false;
@@ -70,8 +76,14 @@ bool CrossProcessIO::Read(std::uintptr_t address, void* buffer, std::size_t size
         lastStatus_ = kStatusInvalidParameter;
         return false;
     }
-    const SyscallInfo* info = SyscallResolver::Instance().Get(SyscallId::NtReadVirtualMemory);
-    if (info == nullptr || !info->resolved) {
+    auto& resolver = SyscallResolver::Instance();
+    if (!resolver.Initialize() || !resolver.IsInitialized()) {
+        lastStatus_ = kStatusInvalidParameter;
+        return false;
+    }
+    const SyscallInfo* info = resolver.Get(SyscallId::NtReadVirtualMemory);
+    if (info == nullptr || !info->resolved || info->address == nullptr ||
+        info->number == kUnresolvedSyscall) {
         lastStatus_ = kStatusInvalidParameter;
         return false;
     }
@@ -94,8 +106,14 @@ bool CrossProcessIO::Write(std::uintptr_t address, const void* buffer, std::size
         lastStatus_ = kStatusInvalidParameter;
         return false;
     }
-    const SyscallInfo* info = SyscallResolver::Instance().Get(SyscallId::NtWriteVirtualMemory);
-    if (info == nullptr || !info->resolved) {
+    auto& resolver = SyscallResolver::Instance();
+    if (!resolver.Initialize() || !resolver.IsInitialized()) {
+        lastStatus_ = kStatusInvalidParameter;
+        return false;
+    }
+    const SyscallInfo* info = resolver.Get(SyscallId::NtWriteVirtualMemory);
+    if (info == nullptr || !info->resolved || info->address == nullptr ||
+        info->number == kUnresolvedSyscall) {
         lastStatus_ = kStatusInvalidParameter;
         return false;
     }
