@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstdio>
 #include <cstdint>
 #include <utility>
 #include <windows.h>
@@ -25,7 +26,21 @@ void TestHandleGuardRaII() {
 }
 
 void TestResolverFindsRead() {
-    assert(true);
+    auto& resolver = wwz::sandbox::SyscallResolver::Instance();
+    assert(resolver.Initialize());
+    assert(resolver.IsInitialized());
+
+    const auto* read = resolver.Get(wwz::sandbox::SyscallId::NtReadVirtualMemory);
+    assert(read != nullptr);
+    assert(read->address != nullptr);
+    assert(read->resolved);
+    assert(read->number != wwz::sandbox::kUnresolvedSyscall);
+
+    for (std::uint8_t raw = 0; raw < static_cast<std::uint8_t>(wwz::sandbox::SyscallId::Count); ++raw) {
+        const auto* info = resolver.Get(static_cast<wwz::sandbox::SyscallId>(raw));
+        assert(info != nullptr);
+        std::printf("%s: %u\n", info->name, info->number);
+    }
 }
 
 void TestCrossProcessIoUsesCurrentProcess() {

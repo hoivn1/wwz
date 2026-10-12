@@ -10,6 +10,7 @@ endif()
 
 add_library(wwz_sandbox STATIC)
 target_include_directories(wwz_sandbox PUBLIC include)
+target_sources(wwz_sandbox PRIVATE src/Sandbox/SyscallResolver.cpp)
 
 add_executable(wwz_external src/main.cpp)
 target_link_libraries(wwz_external PRIVATE wwz_sandbox)
